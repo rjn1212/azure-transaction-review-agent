@@ -85,12 +85,12 @@ cd web && npm ci && npm start
 
 ## Cost control
 
-- Default model `gpt-4o-mini-2024-07-18` (~$0.15 / $0.60 per 1M input/output tokens) → about **$0.001 per review**.
+- Default model `gpt-6-luna` (~$0.10 / $0.50 per 1M input/output tokens) → about **$0.001 per review**.
 - Tools return small payloads (max 10 recent transactions); loop capped at 8 iterations;
   `MaxOutputTokens` 1500. System prompt is static and first, so prompt caching applies.
 - Each run records tokens and cost; the queue page shows total spend.
 - The API has no login, so anyone with the URL could trigger runs. Two guardrails cap the damage:
-  `RateLimit:AgentPerMinute` (10) and `OpenAI:MaxRunsPerDay` (200 ≈ $0.20/day on 4o-mini).
+  `RateLimit:AgentPerMinute` (10) and `OpenAI:MaxRunsPerDay` (200 ≈ $0.20/day on luna).
   For real use, add App Service Authentication (Entra ID) in front of the API.
 - Set a monthly budget on your OpenAI project and a $5 budget alert in Azure Cost Management.
 

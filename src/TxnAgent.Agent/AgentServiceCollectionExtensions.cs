@@ -19,9 +19,11 @@ public static class AgentServiceCollectionExtensions
 
         services.AddSingleton<IChatClient>(sp =>
         {
+#pragma warning disable OPENAI001 // Responses API is experimental
             IChatClient inner = string.IsNullOrWhiteSpace(opts.ApiKey)
                 ? new NotConfiguredChatClient()
-                : new OpenAIClient(opts.ApiKey).GetChatClient(opts.Model).AsIChatClient();
+                : new OpenAIClient(opts.ApiKey).GetResponsesClient().AsIChatClient(opts.Model);
+#pragma warning restore OPENAI001
 
             return new ChatClientBuilder(inner)
                 .UseFunctionInvocation(sp.GetService<ILoggerFactory>(), c => c.MaximumIterationsPerRequest = opts.MaxIterations)

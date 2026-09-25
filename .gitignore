@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+*.trx
+
+# Node / Angular
+node_modules/
+web/dist/
+web/.angular/
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Secrets - never commit
+*.env
+appsettings.*.local.json

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TxnAgent.Api/TxnAgent.Api.csproj" />
+    <Project Path="src/TxnAgent.Agent/TxnAgent.Agent.csproj" />
+    <Project Path="src/TxnAgent.Data/TxnAgent.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TxnAgent.Agent.Tests/TxnAgent.Agent.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,36 @@
+:root {
+  --bg: #f7f8fa; --fg: #1d2330; --muted: #6b7385; --card: #fff; --line: #e3e6ec; --accent: #2458d6;
+  --approve: #1f8a4c; --hold: #b4231b; --escalate: #b76e00;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14171d; --fg: #e6e8ee; --muted: #9aa2b2; --card: #1c2029; --line: #2c3240; --accent: #6d95ff; }
+}
+body { margin: 0; background: var(--bg); color: var(--fg); }
+header { padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+header h1 { font-size: 20px; margin: 0; }
+main { padding: 16px 24px; max-width: 1200px; margin: 0 auto; }
+.muted { color: var(--muted); }
+.error { color: var(--hold); }
+a { color: var(--accent); }
+table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.stats div, .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.stats span, .grid span { display: block; font-size: 12px; color: var(--muted); }
+.stats strong { font-size: 20px; }
+.card { margin: 12px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; }
+.badge.big { font-size: 14px; padding: 4px 12px; }
+.badge.approve { background: var(--approve); } .badge.hold { background: var(--hold); } .badge.escalate { background: var(--escalate); }
+.run-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; margin-right: 6px; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button:disabled { opacity: .6; cursor: default; }
+.trace { padding-left: 20px; }
+.trace li { margin: 6px 0; }
+.trace pre { background: var(--bg); padding: 8px; border-radius: 6px; overflow-x: auto; font-size: 12px; max-height: 240px; }
+.back { display: inline-block; margin-bottom: 8px; }

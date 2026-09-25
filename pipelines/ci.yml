@@ -1,0 +1,31 @@
+# CI: runs on PRs into main and on pushes to feature branches (main is covered by cd.yml, which also tests).
+# Azure DevOps -> Pipelines -> New -> GitHub -> Existing YAML -> /pipelines/ci.yml
+trigger:
+  branches: { exclude: [ main ] }
+pr:
+  branches: { include: [ main ] }
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: UseDotNet@2
+    displayName: Use .NET 10 SDK
+    inputs: { packageType: sdk, version: 10.x }
+
+  - script: dotnet restore TxnAgent.slnx
+    displayName: Restore
+  - script: dotnet build TxnAgent.slnx -c Release --no-restore
+    displayName: Build
+  - script: dotnet test TxnAgent.slnx -c Release --no-build --logger trx --results-directory $(Agent.TempDirectory)/tests
+    displayName: Test (no OpenAI calls - uses a scripted fake LLM)
+  - task: PublishTestResults@2
+    condition: always()
+    inputs: { testResultsFormat: VSTest, testResultsFiles: '$(Agent.TempDirectory)/tests/*.trx' }
+
+  - task: NodeTool@0
+    displayName: Use Node 24
+    inputs: { versionSpec: 24.x }
+  - script: npm ci && npm run build && npm test -- --watch=false
+    workingDirectory: web
+    displayName: Angular build + test

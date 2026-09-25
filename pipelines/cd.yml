@@ -1,0 +1,73 @@
+# CD: builds and deploys API (App Service) and UI (Static Web Apps) on each push to main.
+# Prereqs (see README "Azure DevOps"):
+#   - ARM service connection named below, scoped to the resource group
+#   - Variable group 'txnagent-dev' with: apiAppName, apiBaseUrl, swaDeploymentToken (secret)
+#   - Environment 'dev' (add an approval check to practise gated deploys)
+trigger:
+  branches: { include: [ main ] }
+  paths: { exclude: [ '**/*.md' ] }
+pr: none
+
+variables:
+  - group: txnagent-dev
+  - name: azureServiceConnection
+    value: sc-txnagent-dev
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        pool: { vmImage: ubuntu-latest }
+        steps:
+          - task: UseDotNet@2
+            inputs: { packageType: sdk, version: 10.x }
+          - script: dotnet test TxnAgent.slnx -c Release
+            displayName: Test
+          - script: dotnet publish src/TxnAgent.Api/TxnAgent.Api.csproj -c Release -o $(Build.ArtifactStagingDirectory)/api
+            displayName: Publish API
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/api
+              includeRootFolder: false
+              archiveFile: $(Build.ArtifactStagingDirectory)/api.zip
+          - publish: $(Build.ArtifactStagingDirectory)/api.zip
+            artifact: api
+
+          - task: NodeTool@0
+            inputs: { versionSpec: 24.x }
+          - script: npm ci && npm run build
+            workingDirectory: web
+            displayName: Build Angular
+          # Point the SPA at the Azure API (runtime config, no rebuild per environment).
+          - script: echo '{ "apiBaseUrl": "$(apiBaseUrl)" }' > web/dist/web/browser/config.json
+            displayName: Write config.json
+          - publish: web/dist/web/browser
+            artifact: web
+
+  - stage: Deploy
+    dependsOn: Build
+    jobs:
+      - deployment: Deploy
+        environment: dev
+        pool: { vmImage: ubuntu-latest }
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  displayName: Deploy API to App Service
+                  inputs:
+                    azureSubscription: ${{ variables.azureServiceConnection }}
+                    appType: webAppLinux
+                    appName: $(apiAppName)
+                    package: $(Pipeline.Workspace)/api/api.zip
+                    runtimeStack: DOTNETCORE|10.0
+                - task: AzureStaticWebApp@0
+                  displayName: Deploy UI to Static Web Apps
+                  inputs:
+                    workingDirectory: $(Pipeline.Workspace)/web
+                    app_location: /
+                    skip_app_build: true
+                    azure_static_web_apps_api_token: $(swaDeploymentToken)
+                - script: curl -fsS --retry 5 --retry-delay 10 --max-time 60 "$(apiBaseUrl)/health"
+                  displayName: Smoke test API

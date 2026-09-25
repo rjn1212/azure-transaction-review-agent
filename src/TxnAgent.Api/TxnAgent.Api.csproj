@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>txnagent-api-7c1e4b2a</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TxnAgent.Agent\TxnAgent.Agent.csproj" />
+    <ProjectReference Include="..\TxnAgent.Data\TxnAgent.Data.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <!-- Brings Options/Configuration/DI/Logging extensions used by the registration helpers. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.10.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TxnAgent.Data\TxnAgent.Data.csproj" />
+  </ItemGroup>
+</Project>

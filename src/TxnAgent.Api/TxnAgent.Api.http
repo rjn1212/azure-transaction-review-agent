@@ -1,0 +1,26 @@
+@api = http://localhost:5080/api
+
+GET {{api}}/health
+
+###
+GET {{api}}/alerts?status=open
+
+###
+GET {{api}}/alerts/3
+
+###
+# Calls OpenAI (costs ~ $0.002 on gpt-6-luna)
+POST {{api}}/alerts/3/review
+
+###
+POST {{api}}/runs/1/final
+Content-Type: application/json
+
+{ "decision": "HOLD", "analyst": "randy" }
+
+###
+GET {{api}}/stats
+
+###
+# Clears agent runs and reopens alerts (no OpenAI calls)
+POST {{api}}/demo/reset

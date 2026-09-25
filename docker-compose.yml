@@ -1,0 +1,15 @@
+# Local SQL Server for development (works on Apple Silicon via Docker Desktop's Rosetta emulation).
+# Start: docker compose up -d     Stop: docker compose down
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "TxnAgent_dev_Passw0rd!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+volumes:
+  sqldata:

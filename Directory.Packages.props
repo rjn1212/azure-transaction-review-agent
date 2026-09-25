@@ -1,0 +1,7 @@
+<Project>
+  <!-- Central package management is turned off; versions live in each .csproj.
+       This file can be deleted (git rm Directory.Packages.props). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

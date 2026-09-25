@@ -40,7 +40,7 @@ public static class DbInitializer
             HomeCountry = i % 10 == 0 ? "CA" : "US",
             OpenedOn = DateOnly.FromDateTime(now.AddDays(-rng.Next(60, 3650))),
             AvgMonthlySpend = rng.Next(800, 6000),
-            CardStatus = i == 49 ? "Suspended" : "Active",
+            CardStatus = i >= 48 ? "Suspended" : "Active",
         }).ToList();
         db.Customers.AddRange(customers);
 
@@ -56,6 +56,11 @@ public static class DbInitializer
             new() { Name = "QuickCash Crypto", Mcc = "6051", Category = "Crypto / quasi-cash", Country = "MT", RiskScore = 88, ChargebackRate = 0.031m },
             new() { Name = "LuxWatch Boutique", Mcc = "5944", Category = "Jewelry", Country = "FR", RiskScore = 60, ChargebackRate = 0.015m },
             new() { Name = "StreamFlix", Mcc = "4899", Category = "Subscriptions", RiskScore = 10, ChargebackRate = 0.003m },
+            new() { Name = "PharmaDirect", Mcc = "5912", Category = "Pharmacy", RiskScore = 15, ChargebackRate = 0.003m },
+            new() { Name = "AutoParts Express", Mcc = "5533", Category = "Auto parts", RiskScore = 20, ChargebackRate = 0.005m },
+            new() { Name = "NightOwl Casino", Mcc = "7995", Category = "Gambling", Country = "GB", RiskScore = 92, ChargebackRate = 0.035m },
+            new() { Name = "TechHub Store", Mcc = "5045", Category = "Computers", RiskScore = 35, ChargebackRate = 0.009m },
+            new() { Name = "GlobalPay Transfer", Mcc = "6012", Category = "Money transfer", Country = "NG", RiskScore = 95, ChargebackRate = 0.042m },
         };
         db.Merchants.AddRange(merchants);
         var everyday = merchants.Take(4).Concat([merchants[9]]).ToList();
@@ -81,14 +86,60 @@ public static class DbInitializer
         // Labelled with the decision the policy implies, so agent accuracy can be measured.
         var scenarios = new (int cust, int merch, decimal mult, string country, string channel, string reason, string expected)[]
         {
-            (0, 3, 1.5m, "", "CardPresent", "Amount above 30-day average", "APPROVE"),          // R1
-            (1, 2, 1.2m, "", "CardPresent", "New device fingerprint", "APPROVE"),               // R1
-            (2, 7, 12m, "MT", "Online", "High-risk MCC, foreign country", "HOLD"),              // R2, R3
-            (3, 8, 9m, "FR", "CardPresent", "Large foreign jewelry purchase", "HOLD"),          // R2
-            (4, 4, 4m, "GB", "Online", "Travel purchase, foreign country", "ESCALATE"),         // foreign but < 5x: no rule fits -> R5
-            (5, 6, 4m, "", "Online", "Electronics spike", "ESCALATE"),                          // above R1, below R2, mid-risk merchant
-            (49, 0, 1m, "", "CardPresent", "Transaction on suspended card", "HOLD"),            // R6
-            (10, 5, 3m, "US", "CardPresent", "Cross-border for CA customer", "ESCALATE"),       // foreign but below R2 threshold
+            // === R1: APPROVE — domestic, within 2x typical, merchant risk < 40 ===
+            (0,  3, 1.5m,  "",   "CardPresent", "Amount above 30-day average",         "APPROVE"),
+            (1,  2, 1.2m,  "",   "CardPresent", "New device fingerprint",              "APPROVE"),
+            (7,  0, 1.8m,  "",   "CardPresent", "Slightly elevated grocery bill",      "APPROVE"),
+            (8,  1, 1.0m,  "",   "CardPresent", "Routine fuel purchase",               "APPROVE"),
+            (9,  2, 1.5m,  "",   "Online",      "Large coffee order for office",       "APPROVE"),
+            (11, 9, 0.8m,  "",   "Online",      "Subscription renewal",                "APPROVE"),
+            (12, 3, 1.3m,  "",   "CardPresent", "Retail shopping",                     "APPROVE"),
+            (13, 4, 1.2m,  "",   "CardPresent", "Domestic airline ticket",             "APPROVE"),
+            (14, 5, 1.6m,  "",   "CardPresent", "Weekend hotel stay",                  "APPROVE"),
+            (15, 0, 1.1m,  "",   "Online",      "Online grocery delivery",             "APPROVE"),
+            (20, 1, 1.4m,  "",   "CardPresent", "Fuel stop on road trip",              "APPROVE"),
+            (30, 3, 1.7m,  "",   "CardPresent", "Department store purchase",           "APPROVE"),
+            (44, 10, 1.2m, "",   "CardPresent", "Pharmacy pickup",                     "APPROVE"),
+            (45, 11, 1.0m, "",   "CardPresent", "Auto parts purchase",                 "APPROVE"),
+
+            // === R2: HOLD — foreign country AND amount > 5x typical ===
+            (2,  7, 12m,   "MT", "Online",      "High-risk MCC, foreign country",      "HOLD"),
+            (3,  8, 9m,    "FR", "CardPresent", "Large foreign jewelry purchase",       "HOLD"),
+            (16, 4, 6m,    "JP", "CardPresent", "Overseas airline ticket",              "HOLD"),
+            (17, 5, 7m,    "TH", "Online",      "Expensive resort booking abroad",      "HOLD"),
+            (18, 3, 8m,    "DE", "CardPresent", "Luxury retail purchase in Germany",    "HOLD"),
+            (19, 0, 6.5m,  "MX", "CardPresent", "Large purchase in Mexico",             "HOLD"),
+            (21, 4, 10m,   "AE", "Online",      "Huge airline booking from Dubai",      "HOLD"),
+            (22, 1, 5.5m,  "IT", "CardPresent", "High-value fuel purchase in Italy",    "HOLD"),
+            (47, 11, 7m,   "BR", "CardPresent", "Expensive auto parts in Brazil",       "HOLD"),
+
+            // === R3: HOLD — merchant risk >= 80 or chargeback rate >= 2% ===
+            (23, 7, 2m,    "MT", "Online",      "Crypto exchange purchase",             "HOLD"),
+            (24, 7, 0.5m,  "MT", "Online",      "Small crypto transaction",             "HOLD"),
+            (25, 12, 3m,   "GB", "Online",      "Online casino deposit",                "HOLD"),
+            (26, 14, 1m,   "NG", "Online",      "Money transfer to Nigeria",            "HOLD"),
+            (27, 12, 1.5m, "GB", "CardPresent", "Casino visit in London",               "HOLD"),
+            (28, 14, 2m,   "NG", "Online",      "International money transfer",         "HOLD"),
+
+            // === R5: ESCALATE — no rule fully applies ===
+            (4,  4, 4m,    "GB", "Online",      "Travel purchase, foreign country",     "ESCALATE"),
+            (5,  6, 4m,    "",   "Online",      "Electronics spike",                    "ESCALATE"),
+            (10, 5, 3m,    "US", "CardPresent", "Cross-border for CA customer",         "ESCALATE"),
+            (35, 4, 3m,    "FR", "Online",      "Mid-range airline ticket in France",   "ESCALATE"),
+            (36, 5, 4.5m,  "DE", "CardPresent", "Hotel in Germany near threshold",      "ESCALATE"),
+            (37, 6, 3m,    "",   "Online",      "Electronics purchase above average",   "ESCALATE"),
+            (38, 0, 3.5m,  "",   "CardPresent", "Elevated grocery spend",               "ESCALATE"),
+            (39, 3, 2.5m,  "",   "Online",      "Above-average retail purchase",        "ESCALATE"),
+            (40, 8, 2m,    "FR", "CardPresent", "Moderate jewelry purchase abroad",     "ESCALATE"),
+            (41, 1, 4m,    "JP", "Online",      "Fuel purchase in Japan",               "ESCALATE"),
+            (42, 6, 2.5m,  "",   "CardPresent", "Electronics above threshold",          "ESCALATE"),
+            (43, 8, 1.5m,  "",   "CardPresent", "Domestic jewelry purchase",            "ESCALATE"),
+            (46, 13, 3m,   "AU", "Online",      "Computer purchase from Australia",     "ESCALATE"),
+
+            // === R6: HOLD — card suspended ===
+            (49, 0, 1m,    "",   "CardPresent", "Transaction on suspended card",        "HOLD"),
+            (48, 2, 1m,    "",   "CardPresent", "Coffee purchase on suspended card",    "HOLD"),
+            (48, 3, 2m,    "",   "Online",      "Online retail on suspended card",      "HOLD"),
         };
         foreach (var (ci, mi, mult, country, channel, reason, expected) in scenarios)
         {
@@ -96,7 +147,6 @@ public static class DbInitializer
             var t = new Transaction
             {
                 Customer = c, Merchant = merchants[mi],
-                // Normal history averages ~AvgMonthlySpend/30 per transaction, so mult ~= "x typical".
                 Amount = Math.Round(c.AvgMonthlySpend / 30 * mult, 2),
                 Channel = channel,
                 Country = country == "" ? c.HomeCountry : country,
@@ -106,13 +156,25 @@ public static class DbInitializer
             db.Alerts.Add(new Alert { Transaction = t, Reason = reason, CreatedAt = t.OccurredAt.AddMinutes(1), ExpectedDecision = expected });
         }
 
-        // Velocity pattern for customer 6: three countries in 24h (R4).
-        var c6 = customers[6];
-        foreach (var (ctry, hrs) in new[] { ("US", 20), ("MX", 9), ("BR", 1) })
+        // R4: HOLD — velocity patterns (3+ countries in 24h).
+        var velocityPatterns = new (int cust, (string country, int hoursAgo)[] legs, string reason)[]
         {
-            var t = new Transaction { Customer = c6, Merchant = merchants[3], Amount = 180, Channel = "CardPresent", Country = ctry, OccurredAt = now.AddHours(-hrs) };
-            db.Transactions.Add(t);
-            if (ctry == "BR") db.Alerts.Add(new Alert { Transaction = t, Reason = "Velocity: multiple countries", CreatedAt = t.OccurredAt.AddMinutes(1), ExpectedDecision = "HOLD" }); // R4
+            (6,  [("US", 20), ("MX", 9),  ("BR", 1)],                         "Velocity: multiple countries"),
+            (31, [("US", 22), ("MX", 10), ("JP", 2)],                         "Velocity: three countries in 24h"),
+            (32, [("US", 20), ("GB", 8),  ("DE", 3)],                         "Velocity: rapid cross-border spend"),
+            (33, [("US", 15), ("FR", 7),  ("ES", 1)],                         "Velocity: Europe hopping"),
+            (34, [("US", 20), ("MX", 12), ("BR", 4), ("CO", 1)],              "Velocity: four countries in 24h"),
+        };
+        foreach (var (ci, legs, reason) in velocityPatterns)
+        {
+            var c = customers[ci];
+            foreach (var (ctry, hrs) in legs)
+            {
+                var t = new Transaction { Customer = c, Merchant = merchants[3], Amount = 180, Channel = "CardPresent", Country = ctry, OccurredAt = now.AddHours(-hrs) };
+                db.Transactions.Add(t);
+                if (ctry == legs[^1].country)
+                    db.Alerts.Add(new Alert { Transaction = t, Reason = reason, CreatedAt = t.OccurredAt.AddMinutes(1), ExpectedDecision = "HOLD" });
+            }
         }
     }
 }

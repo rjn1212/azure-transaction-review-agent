@@ -157,6 +157,23 @@ api.MapPost("/demo/reset", async (TxnDbContext db, IConfiguration cfg) =>
     return Results.NoContent();
 });
 
+// Demo helper: wipe ALL data and re-seed from scratch. Use after changing seed data in DbInitializer.
+api.MapPost("/demo/reseed", async (TxnDbContext db, IConfiguration cfg) =>
+{
+    if (!cfg.GetValue("Demo:AllowReset", true)) return Results.NotFound();
+    await db.AgentSteps.ExecuteDeleteAsync();
+    await db.AgentRuns.ExecuteDeleteAsync();
+    await db.Alerts.ExecuteDeleteAsync();
+    await db.Transactions.ExecuteDeleteAsync();
+    await db.Merchants.ExecuteDeleteAsync();
+    await db.Customers.ExecuteDeleteAsync();
+    await db.PolicyRules.ExecuteDeleteAsync();
+    DbInitializer.Seed(db, DateTime.UtcNow);
+    await db.SaveChangesAsync();
+    var count = await db.Alerts.CountAsync();
+    return Results.Ok(new { reseeded = true, alerts = count });
+});
+
 app.Run();
 
 static object ToDto(AgentRun r) => new

@@ -88,7 +88,7 @@ API endpoints, all under `/api`:
   - Tools return small payloads (at most 10 recent transactions).
   - The system prompt stays static and first in the conversation, so prompt caching applies.
 - **Cost per run** is computed from `OpenAI:InputPricePerMillion` / `OutputPricePerMillion`
-  (0.10 / 0.50 for `gpt-6-luna`). Update these if you change the model.
+  (0.15 / 0.60 for `gpt-4o-mini-2024-07-18`). Update these if you change the model.
 - **Schema creation:** on startup, `DbInitializer` runs `Migrate()` if migrations exist, otherwise
   `EnsureCreated()`. Create the initial migration before the first run against any database;
   otherwise the database can't be migrated later.
@@ -119,9 +119,8 @@ Not yet done or verified:
 - [ ] Commit and push the current state to GitHub (may already be done; check `git status`).
 - [ ] Initial EF migration.
 - [ ] Local end-to-end run: Docker SQL, API and UI.
-- [ ] First real OpenAI call. **The model ID `gpt-6-luna` is taken from OpenAI's pricing page but
-      hasn't been tried against the owner's account yet.** If it returns a 404 or 400, pick an
-      available cheap model and update the prices in `appsettings.json`.
+- [x] First real OpenAI call. Switched from `gpt-6-luna` (not available on the owner's project)
+      to `gpt-4o-mini-2024-07-18`. Prices updated in `appsettings.json`.
 - [ ] Azure resources: by hand first (for learning), then compare with `infra/main.bicep`, which
       has never been deployed and may need API-version or property fixes.
 - [ ] Azure DevOps: org, billing link (unlocks the free hosted job), service connections

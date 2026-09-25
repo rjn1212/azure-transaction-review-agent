@@ -76,10 +76,12 @@ API endpoints, all under `/api`:
   becomes `ESCALATE`.
 - **Tool time windows are anchored to the flagged transaction's `OccurredAt`, not `UtcNow`.** This
   keeps the seeded demo data valid indefinitely. Don't switch back to `UtcNow`.
-- **Seed data is deterministic** (`Random(42)`), with 9 alerts, each labelled with an
-  `ExpectedDecision` derived from rules R1–R6. `/stats` reports accuracy against these labels.
-  The seeded amount is `AvgMonthlySpend / 30 * mult`, where `mult` is roughly "times the typical
-  transaction". If you change a policy rule, re-check the labels.
+- **Seed data is deterministic** (`Random(42)`), with 50 alerts (14 R1-APPROVE, 9 R2-HOLD,
+  6 R3-HOLD, 5 R4-HOLD, 13 R5-ESCALATE, 3 R6-HOLD), each labelled with an `ExpectedDecision`
+  derived from rules R1–R6. `/stats` reports accuracy against these labels. 15 merchants
+  (including 2 high-risk for R3), 50 customers (48–49 suspended for R6). The seeded amount is
+  `AvgMonthlySpend / 30 * mult`, where `mult` is roughly "times the typical transaction". If
+  you change a policy rule, re-check the labels.
 - **Cost guardrails:**
   - `RateLimit:AgentPerMinute` = 10.
   - `OpenAI:MaxRunsPerDay` = 200.
